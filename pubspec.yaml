@@ -22,6 +22,11 @@ dependencies:
   # Push notifications
   firebase_core: ^2.32.0
   firebase_messaging: ^14.9.4
+  # FCM only auto-shows a system notification when the app is
+  # backgrounded/terminated; while foregrounded it just delivers the
+  # message silently to onMessage, so this is needed to show something
+  # for that case too.
+  flutter_local_notifications: ^17.2.2
 
   # Routing
   go_router: ^14.2.0

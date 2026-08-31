@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Android 13+ (API 33) requires this to be declared before the
+         app can request it at runtime; FirebaseMessaging.instance
+         .requestPermission() in push_notification_service.dart is
+         what actually triggers the prompt. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="parchment"
         android:name="${applicationName}"

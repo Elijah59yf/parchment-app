@@ -17,10 +17,18 @@ import '../widgets/coming_soon_screen.dart';
 /// AppShell only controls which ones are *visible* as nav items. This
 /// is required by StatefulShellRoute (branches are static), and it
 /// also means each tab keeps its own independent navigation stack.
+///
+/// Module-level (not per-router-instance) since PushNotificationService
+/// needs a stable handle to push routes/screens from a notification
+/// tap, which can happen with no relevant BuildContext of its own to
+/// hand it (e.g. a cold start where the app itself created this frame).
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authStatus = ref.watch(authStatusProvider);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     routes: [
       GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "304540834371",
+    "project_id": "parchment-monarch",
+    "storage_bucket": "parchment-monarch.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304540834371:android:db352f0b4a2616c4e692f6",
+        "android_client_info": {
+          "package_name": "com.monarch.parchment"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATJCuLdLOHqCgp4WX_M48WIIYK37Y2XMM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
