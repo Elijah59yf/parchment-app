@@ -53,22 +53,47 @@ class AppShell extends ConsumerWidget {
 
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedPosition < 0 ? 0 : selectedPosition,
-        onDestinationSelected: (position) => _goBranch(
-          navigationShell,
-          destinations[position].branchIndex,
-        ),
-        backgroundColor: AppTheme.paper,
-        indicatorColor: AppTheme.surface,
-        destinations: [
-          for (final d in destinations)
-            NavigationDestination(
-              icon: Icon(d.outlineIcon),
-              selectedIcon: Icon(d.filledIcon),
-              label: d.label,
+      bottomNavigationBar: Theme(
+        // NavigationBar only exposes indicatorColor directly; icon/label
+        // color swap on selection goes through the theme.
+        data: Theme.of(context).copyWith(
+          navigationBarTheme: NavigationBarThemeData(
+            iconTheme: WidgetStateProperty.resolveWith(
+              (states) => IconThemeData(
+                color: states.contains(WidgetState.selected) ? AppTheme.paper : AppTheme.muted,
+                size: 24,
+              ),
             ),
-        ],
+            labelTextStyle: WidgetStateProperty.resolveWith(
+              (states) => TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: states.contains(WidgetState.selected) ? AppTheme.paper : AppTheme.muted,
+              ),
+            ),
+          ),
+        ),
+        child: NavigationBar(
+          selectedIndex: selectedPosition < 0 ? 0 : selectedPosition,
+          onDestinationSelected: (position) => _goBranch(
+            navigationShell,
+            destinations[position].branchIndex,
+          ),
+          backgroundColor: AppTheme.paper,
+          indicatorColor: AppTheme.ink,
+          // Was showing all 6 labels at once, which is what caused
+          // "Dashboard" to wrap — only the active tab's label competing
+          // for space fixes that, and reads cleaner besides.
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+          destinations: [
+            for (final d in destinations)
+              NavigationDestination(
+                icon: Icon(d.outlineIcon),
+                selectedIcon: Icon(d.filledIcon),
+                label: d.label,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -140,21 +165,35 @@ class _BarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppTheme.ink : AppTheme.muted;
     return InkWell(
       onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-        child: Column(
+      customBorder: const StadiumBorder(),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.symmetric(horizontal: selected ? 14 : 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.ink : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(selected ? dest.filledIcon : dest.outlineIcon, color: color, size: 24),
-            const SizedBox(height: 2),
-            Text(
-              dest.label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
+            Icon(
+              selected ? dest.filledIcon : dest.outlineIcon,
+              color: selected ? AppTheme.paper : AppTheme.muted,
+              size: 22,
             ),
+            if (selected) ...[
+              const SizedBox(width: 6),
+              Text(
+                dest.label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.paper,
+                ),
+              ),
+            ],
           ],
         ),
       ),
