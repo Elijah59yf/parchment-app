@@ -175,10 +175,9 @@ class _BottomBar extends StatelessWidget {
       // Explicit total height = bar content + the device's own home-
       // indicator inset. Nothing below this point is ever unbounded.
       height: AppShell._barHeight + bottomInset,
-      decoration: const BoxDecoration(
-        color: AppTheme.paper,
-        border: Border(top: BorderSide(color: AppTheme.border)),
-      ),
+      // No top border — admin's BottomAppBar doesn't draw one either,
+      // so this keeps all three roles visually consistent.
+      color: AppTheme.paper,
       child: SafeArea(
         top: false,
         child: SizedBox(
