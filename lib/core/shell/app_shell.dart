@@ -13,14 +13,19 @@ import '../theme/app_theme.dart';
 ///   0 = Dashboard, 1 = Feed, 2 = Materials, 3 = Polls,
 ///   4 = Profile,   5 = Manage, 6 = Admin
 ///
-/// What changes per role is (a) which branches are visible at all, and
-/// (b) how they're arranged:
-///   - student/rep: a normal NavigationBar, Profile always last.
-///   - admin: 7 flat items was cramped (labels were wrapping to two
-///     lines — Material's own guidance caps a standard bottom nav at
-///     5). Admin becomes a centered, elevated, notched FAB instead of
-///     a 7th flat item — Flutter's built-in BottomAppBar + docked FAB
-///     pattern, not a custom hack.
+/// Every role uses the SAME custom `_BarItem` (ink pill, label appears
+/// beside the icon only when selected) instead of mixing that with
+/// stock Material `NavigationBar` for student/rep. That mix is what
+/// caused two bugs: stock NavigationBar's onlyShowSelected label only
+/// rendered during its built-in transition animation then got clipped
+/// (label "briefly appearing" then vanishing), and it laid labels out
+/// *under* the icon while the custom admin bar put them *beside* it —
+/// two different behaviors in the same app. One custom widget for
+/// everyone fixes both at once.
+///
+/// admin additionally gets a centered, elevated, notched FAB for Admin
+/// instead of it being a 7th flat item (7 was cramped — Material's own
+/// guidance caps a standard bottom bar at 5).
 class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.navigationShell});
 
@@ -47,53 +52,12 @@ class AppShell extends ConsumerWidget {
         ? const [_dashboard, _feed, _materials, _polls, _manage, _profile]
         : const [_dashboard, _feed, _materials, _polls, _profile];
 
-    final selectedPosition = destinations.indexWhere(
-      (d) => d.branchIndex == navigationShell.currentIndex,
-    );
-
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: Theme(
-        // NavigationBar only exposes indicatorColor directly; icon/label
-        // color swap on selection goes through the theme.
-        data: Theme.of(context).copyWith(
-          navigationBarTheme: NavigationBarThemeData(
-            iconTheme: WidgetStateProperty.resolveWith(
-              (states) => IconThemeData(
-                color: states.contains(WidgetState.selected) ? AppTheme.paper : AppTheme.muted,
-                size: 24,
-              ),
-            ),
-            labelTextStyle: WidgetStateProperty.resolveWith(
-              (states) => TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: states.contains(WidgetState.selected) ? AppTheme.paper : AppTheme.muted,
-              ),
-            ),
-          ),
-        ),
-        child: NavigationBar(
-          selectedIndex: selectedPosition < 0 ? 0 : selectedPosition,
-          onDestinationSelected: (position) => _goBranch(
-            navigationShell,
-            destinations[position].branchIndex,
-          ),
-          backgroundColor: AppTheme.paper,
-          indicatorColor: AppTheme.ink,
-          // Was showing all 6 labels at once, which is what caused
-          // "Dashboard" to wrap — only the active tab's label competing
-          // for space fixes that, and reads cleaner besides.
-          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-          destinations: [
-            for (final d in destinations)
-              NavigationDestination(
-                icon: Icon(d.outlineIcon),
-                selectedIcon: Icon(d.filledIcon),
-                label: d.label,
-              ),
-          ],
-        ),
+      bottomNavigationBar: _BottomBar(
+        items: destinations,
+        currentBranchIndex: navigationShell.currentIndex,
+        onSelect: (branchIndex) => _goBranch(navigationShell, branchIndex),
       ),
     );
   }
@@ -132,24 +96,75 @@ class _AdminShell extends StatelessWidget {
         color: AppTheme.paper,
         shape: const CircularNotchedRectangle(),
         notchMargin: 8,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            for (final d in _left)
-              _BarItem(
-                dest: d,
-                selected: currentIndex == d.branchIndex,
-                onTap: () => _goBranch(navigationShell, d.branchIndex),
-              ),
-            // Reserves the gap the FAB notch sits in.
-            const SizedBox(width: 48),
-            for (final d in _right)
-              _BarItem(
-                dest: d,
-                selected: currentIndex == d.branchIndex,
-                onTap: () => _goBranch(navigationShell, d.branchIndex),
-              ),
-          ],
+        padding: EdgeInsets.zero,
+        child: SafeArea(
+          top: false,
+          child: Row(
+            children: [
+              for (final d in _left)
+                Expanded(
+                  child: _BarItem(
+                    dest: d,
+                    selected: currentIndex == d.branchIndex,
+                    onTap: () => _goBranch(navigationShell, d.branchIndex),
+                  ),
+                ),
+              // Reserves the gap the FAB notch sits in. Fixed width is
+              // safe here — it's the Expanded items on either side that
+              // absorb any extra/short space, so the Row can never
+              // overflow regardless of screen width or label length.
+              const SizedBox(width: 48),
+              for (final d in _right)
+                Expanded(
+                  child: _BarItem(
+                    dest: d,
+                    selected: currentIndex == d.branchIndex,
+                    onTap: () => _goBranch(navigationShell, d.branchIndex),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The plain (non-notched) bar used for student/rep.
+class _BottomBar extends StatelessWidget {
+  const _BottomBar({
+    required this.items,
+    required this.currentBranchIndex,
+    required this.onSelect,
+  });
+
+  final List<_Dest> items;
+  final int currentBranchIndex;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppTheme.paper,
+        border: Border(top: BorderSide(color: AppTheme.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              for (final d in items)
+                Expanded(
+                  child: _BarItem(
+                    dest: d,
+                    selected: currentBranchIndex == d.branchIndex,
+                    onTap: () => onSelect(d.branchIndex),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -168,33 +183,44 @@ class _BarItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       customBorder: const StadiumBorder(),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: EdgeInsets.symmetric(horizontal: selected ? 14 : 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.ink : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              selected ? dest.filledIcon : dest.outlineIcon,
-              color: selected ? AppTheme.paper : AppTheme.muted,
-              size: 22,
-            ),
-            if (selected) ...[
-              const SizedBox(width: 6),
-              Text(
-                dest.label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.paper,
-                ),
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: EdgeInsets.symmetric(horizontal: selected ? 12 : 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? AppTheme.ink : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          // mainAxisSize.min lets the pill hug its content when there's
+          // room; Flexible+ellipsis on the label is what actually
+          // prevents overflow when there isn't (e.g. "Dashboard" in a
+          // 6-item bar on a narrow phone) — it shrinks instead of
+          // pushing the row past the screen edge.
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                selected ? dest.filledIcon : dest.outlineIcon,
+                color: selected ? AppTheme.paper : AppTheme.muted,
+                size: 22,
               ),
+              if (selected) ...[
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    dest.label,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.paper,
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
