@@ -1,59 +1,21 @@
-plugins {
-    id("com.android.application")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id("dev.flutter.flutter-gradle-plugin")
-    // Requires android/app/google-services.json to be present - see
-    // the push notification setup note. The build fails without it
-    // once this plugin is applied, so don't add this file's presence
-    // check here; it's meant to fail loudly and early instead.
-    id("com.google.gms.google-services")
-}
-
-android {
-    namespace = "com.example.parchment"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    defaultConfig {
-   	 // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-   	 applicationId = "com.example.parchment"
-   	 // You can update the following values to match your application needs.
-   	 // For more information, see: https://flutter.dev/to/review-gradle-config.
-   	 minSdk = flutter.minSdkVersion
-   	 targetSdk = flutter.targetSdkVersion
-   	 // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
-   	 // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-vers>
-   	 // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
-   	 // flag during build.
-   	 versionCode = flutter.versionCode
-   	 versionName = flutter.versionName
-
-   	 // ADD THIS BLOCK:
-   	 ndk {
-        	abiFilters += setOf("arm64-v8a")
-   	 }
-     }
-
-    buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
-        }
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
     }
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
-    }
+val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
+rootProject.layout.buildDirectory.value(newBuildDir)
+
+subprojects {
+    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    project.layout.buildDirectory.value(newSubprojectBuildDir)
+}
+subprojects {
+    project.evaluationDependsOn(":app")
 }
 
-flutter {
-    source = "../.."
+tasks.register<Delete>("clean") {
+    delete(rootProject.layout.buildDirectory)
 }
