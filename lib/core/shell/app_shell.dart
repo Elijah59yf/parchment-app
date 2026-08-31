@@ -13,15 +13,23 @@ import '../theme/app_theme.dart';
 ///   0 = Dashboard, 1 = Feed, 2 = Materials, 3 = Polls,
 ///   4 = Profile,   5 = Manage, 6 = Admin
 ///
-/// Every role uses the SAME custom `_BarItem` (ink pill, label appears
-/// beside the icon only when selected) instead of mixing that with
-/// stock Material `NavigationBar` for student/rep. That mix is what
-/// caused two bugs: stock NavigationBar's onlyShowSelected label only
-/// rendered during its built-in transition animation then got clipped
-/// (label "briefly appearing" then vanishing), and it laid labels out
-/// *under* the icon while the custom admin bar put them *beside* it —
-/// two different behaviors in the same app. One custom widget for
-/// everyone fixes both at once.
+/// Every role uses the SAME custom `_BarItem` (icon-only, ink pill on
+/// selection, name revealed via long-press tooltip) instead of mixing
+/// that with stock Material `NavigationBar` for student/rep. Went
+/// through two iterations before landing here:
+///   1. Stock NavigationBar (student/rep) + custom pill (admin) — two
+///      different behaviors in the same app: NavigationBar put labels
+///      *under* the icon, the custom pill put them *beside* it.
+///   2. Unified custom pill, label beside icon, shown only when
+///      selected — fixed the inconsistency, but `Flexible` for the
+///      label sat inside a `Row(mainAxisSize: min)` inside a `Center`
+///      (unbounded width), which is invalid Flutter layout: no bounded
+///      space to flex into, so the text silently rendered as nothing
+///      instead of erroring loudly.
+/// Icon-only sidesteps the whole class of bug — a fixed-size circle
+/// can never overflow regardless of screen width or item count — and
+/// every screen already shows its own name in its app bar anyway, so
+/// the label was redundant besides.
 ///
 /// admin additionally gets a centered, elevated, notched FAB for Admin
 /// instead of it being a 7th flat item (7 was cramped — Material's own
@@ -180,46 +188,32 @@ class _BarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      customBorder: const StadiumBorder(),
-      child: Center(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: EdgeInsets.symmetric(horizontal: selected ? 12 : 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? AppTheme.ink : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          // mainAxisSize.min lets the pill hug its content when there's
-          // room; Flexible+ellipsis on the label is what actually
-          // prevents overflow when there isn't (e.g. "Dashboard" in a
-          // 6-item bar on a narrow phone) — it shrinks instead of
-          // pushing the row past the screen edge.
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                selected ? dest.filledIcon : dest.outlineIcon,
-                color: selected ? AppTheme.paper : AppTheme.muted,
-                size: 22,
-              ),
-              if (selected) ...[
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    dest.label,
-                    overflow: TextOverflow.ellipsis,
-                    softWrap: false,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.paper,
-                    ),
-                  ),
-                ),
-              ],
-            ],
+    // Icon-only: no label ever renders here. Every screen already
+    // shows its own name in its app bar, so a nav label was pure
+    // redundancy — and it was also the source of every layout bug
+    // (wrapping, overflow, text vanishing entirely when Flexible sat
+    // inside an unbounded-width Center). A fixed-size circle can never
+    // overflow no matter the screen width or item count. Long-press
+    // still reveals the name via the platform's native tooltip.
+    return Tooltip(
+      message: dest.label,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: selected ? AppTheme.ink : Colors.transparent,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              selected ? dest.filledIcon : dest.outlineIcon,
+              color: selected ? AppTheme.paper : AppTheme.muted,
+              size: 24,
+            ),
           ),
         ),
       ),
