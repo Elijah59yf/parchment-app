@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../admin/screens/user_management_screen.dart';
-import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/current_user_provider.dart';
 import '../providers/announcements_provider.dart';
 import '../widgets/announcement_card.dart';
@@ -86,11 +85,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   )
                 : const SizedBox.shrink(),
             orElse: () => const SizedBox.shrink(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Log out',
-            onPressed: () => _confirmLogout(context, ref),
           ),
         ],
       ),
@@ -201,30 +195,5 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         },
       ),
     );
-  }
-
-  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Log out?'),
-        content: const Text('You\'ll need your matric number and password to log back in.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Log out'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await ref.read(authStatusProvider.notifier).logout();
-      // Router redirect sends the user to /login once state flips.
-    }
   }
 }
