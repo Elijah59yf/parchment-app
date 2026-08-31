@@ -6,7 +6,7 @@ import '../../features/auth/data/token_storage.dart';
 ///
 /// TODO: move this to an env-based config (--dart-define) before release
 /// so dev/prod URLs aren't hardcoded here.
-const String kApiBaseUrl = 'https://your-backend.onrender.com';
+const String kApiBaseUrl = 'https://papi.monarchdem.me';
 
 class ApiClient {
   ApiClient(this._tokenStorage, {this.onSessionExpired}) {
