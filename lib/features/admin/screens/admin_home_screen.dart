@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/coming_soon_screen.dart';
+import 'allowed_cohorts_screen.dart';
 import 'faculty_department_screen.dart';
 import 'user_management_screen.dart';
 
@@ -37,12 +38,7 @@ class AdminHomeScreen extends StatelessWidget {
             title: 'Allowed Cohorts',
             subtitle: 'Control which cohorts can register and log in',
             onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const ComingSoonScreen(
-                  title: 'Allowed Cohorts',
-                  icon: Icons.groups_outlined,
-                ),
-              ),
+              MaterialPageRoute(builder: (_) => const AllowedCohortsScreen()),
             ),
           ),
           _AdminTile(

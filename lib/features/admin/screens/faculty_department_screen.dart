@@ -425,10 +425,18 @@ class _DepartmentFormDialogState extends ConsumerState<_DepartmentFormDialog> {
           children: [
             DropdownButtonFormField<String>(
               value: _facultyId,
+              isExpanded: true,
               decoration: const InputDecoration(labelText: 'Faculty'),
               items: [
                 for (final f in faculties)
-                  DropdownMenuItem(value: f.id, child: Text('${f.code} — ${f.name}')),
+                  DropdownMenuItem(
+                    value: f.id,
+                    child: Text(
+                      '${f.code} — ${f.name}',
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
               ],
               onChanged: (value) => setState(() => _facultyId = value),
               validator: (value) => value == null ? 'Choose a faculty' : null,
