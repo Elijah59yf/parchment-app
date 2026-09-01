@@ -1,0 +1,16 @@
+# Example manifest — this is the "new files" list from the Faculty &
+# Department pass (Part 1 of the admin screens). Not meant to be run
+# again since these files already exist now; kept as a template for
+# how to format future manifests (comments and blank lines are fine,
+# one path per line, relative to wherever you run the script from).
+
+# admin/models
+lib/features/admin/models/faculty.dart
+lib/features/admin/models/department.dart
+
+# admin/providers
+lib/features/admin/providers/faculty_department_provider.dart
+
+# admin/screens
+lib/features/admin/screens/faculty_department_screen.dart
+lib/features/admin/screens/admin_home_screen.dart

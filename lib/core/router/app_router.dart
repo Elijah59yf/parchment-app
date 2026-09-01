@@ -8,6 +8,7 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/announcements/screens/feed_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/admin/screens/admin_home_screen.dart';
 import '../shell/app_shell.dart';
 import '../widgets/coming_soon_screen.dart';
 
@@ -94,13 +95,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(
-                path: '/admin',
-                builder: (context, state) => const ComingSoonScreen(
-                  title: 'Admin',
-                  icon: Icons.admin_panel_settings_outlined,
-                ),
-              ),
+              GoRoute(path: '/admin', builder: (context, state) => const AdminHomeScreen()),
             ],
           ),
         ],
