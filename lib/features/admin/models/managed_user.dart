@@ -7,7 +7,8 @@
 class ManagedUser {
   const ManagedUser({
     required this.id,
-    required this.fullName,
+    required this.firstName,
+    required this.lastName,
     required this.email,
     required this.matricNumber,
     required this.role,
@@ -17,7 +18,8 @@ class ManagedUser {
   });
 
   final String id;
-  final String fullName;
+  final String firstName;
+  final String lastName;
   final String email;
   final String matricNumber;
   final String role; // 'admin' | 'rep' | 'student'
@@ -25,10 +27,16 @@ class ManagedUser {
   final bool isActive;
   final DateTime createdAt;
 
+  /// Kept for the display call sites (user list, edit screen) that
+  /// just want one string - the backend still stores first/last
+  /// separately, this just joins them for convenience here.
+  String get fullName => '$firstName $lastName';
+
   factory ManagedUser.fromJson(Map<String, dynamic> json) {
     return ManagedUser(
       id: json['id'] as String,
-      fullName: json['full_name'] as String,
+      firstName: json['first_name'] as String,
+      lastName: json['last_name'] as String,
       email: json['email'] as String,
       matricNumber: json['matric_number'] as String,
       role: json['role'] as String,
@@ -41,7 +49,8 @@ class ManagedUser {
   ManagedUser copyWith({String? role, bool? isActive}) {
     return ManagedUser(
       id: id,
-      fullName: fullName,
+      firstName: firstName,
+      lastName: lastName,
       email: email,
       matricNumber: matricNumber,
       role: role ?? this.role,

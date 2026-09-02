@@ -1,6 +1,6 @@
 /// Mirrors the shape returned by the backend for an announcement row,
 /// joined with its author (see announcements.controller.js, every
-/// list/get/create/update response nests `author: { id, full_name, role }`).
+/// list/get/create/update response nests `author: { id, first_name, last_name, role }`).
 class Announcement {
   const Announcement({
     required this.id,
@@ -40,7 +40,9 @@ class Announcement {
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       authorId: author?['id'] as String? ?? json['author_id'] as String? ?? '',
-      authorName: author?['full_name'] as String? ?? 'Unknown',
+      authorName: author != null
+          ? '${author['first_name']} ${author['last_name']}'
+          : 'Unknown',
       authorRole: author?['role'] as String? ?? 'student',
     );
   }

@@ -6,14 +6,14 @@ import 'package:go_router/go_router.dart';
 import '../../../core/widgets/app_logo.dart';
 import '../providers/auth_provider.dart';
 
-/// Registration screen: full name, matric number, email, password ->
-/// POST /auth/register.
+/// Registration screen: first name, last name, matric number, email,
+/// password -> POST /auth/register.
 ///
-/// Matches the backend's Zod schema (registerSchema): fullName 2-100
-/// chars, matricNumber 9 digits, valid email, password 8-72 chars.
-/// On success, persists tokens and marks the session authenticated -
-/// same pattern as LoginScreen, and lets app_router's redirect send
-/// the user to /feed.
+/// Matches the backend's Zod schema (registerSchema): firstName and
+/// lastName 1-50 chars each, matricNumber 9 digits, valid email,
+/// password 8-72 chars. On success, persists tokens and marks the
+/// session authenticated - same pattern as LoginScreen, and lets
+/// app_router's redirect send the user to /feed.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -23,7 +23,8 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _matricController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -35,7 +36,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   void dispose() {
-    _fullNameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _matricController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -43,11 +45,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  String? _validateFullName(String? value) {
+  String? _validateFirstName(String? value) {
     final trimmed = value?.trim() ?? '';
-    if (trimmed.isEmpty) return 'Enter your full name';
-    if (trimmed.length < 2) return 'Name is too short';
-    if (trimmed.length > 100) return 'Name is too long';
+    if (trimmed.isEmpty) return 'Required';
+    if (trimmed.length > 50) return 'Too long';
+    return null;
+  }
+
+  String? _validateLastName(String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) return 'Required';
+    if (trimmed.length > 50) return 'Too long';
     return null;
   }
 
@@ -94,7 +102,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final response = await apiClient.dio.post(
         '/auth/register',
         data: {
-          'fullName': _fullNameController.text.trim(),
+          'firstName': _firstNameController.text.trim(),
+          'lastName': _lastNameController.text.trim(),
           'matricNumber': _matricController.text.trim(),
           'email': _emailController.text.trim(),
           'password': _passwordController.text,
@@ -196,16 +205,34 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                 ),
                 const SizedBox(height: 28),
-                TextFormField(
-                  controller: _fullNameController,
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.words,
-                  autofillHints: const [AutofillHints.name],
-                  decoration: const InputDecoration(
-                    labelText: 'Full name',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                  validator: _validateFullName,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _firstNameController,
+                        textInputAction: TextInputAction.next,
+                        textCapitalization: TextCapitalization.words,
+                        autofillHints: const [AutofillHints.givenName],
+                        decoration: const InputDecoration(
+                          labelText: 'First name',
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                        validator: _validateFirstName,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _lastNameController,
+                        textInputAction: TextInputAction.next,
+                        textCapitalization: TextCapitalization.words,
+                        autofillHints: const [AutofillHints.familyName],
+                        decoration: const InputDecoration(labelText: 'Last name'),
+                        validator: _validateLastName,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 TextFormField(

@@ -19,24 +19,31 @@ final currentUserProvider = FutureProvider<CurrentUser>((ref) async {
 class CurrentUser {
   const CurrentUser({
     required this.id,
-    required this.fullName,
+    required this.firstName,
+    required this.lastName,
     required this.email,
     required this.matricNumber,
     required this.role,
   });
 
   final String id;
-  final String fullName;
+  final String firstName;
+  final String lastName;
   final String email;
   final String matricNumber;
   final String role; // 'admin' | 'rep' | 'student'
 
   bool get canPost => role == 'admin' || role == 'rep';
 
+  /// Kept for display call sites (profile screen) that just want one
+  /// string - the backend still stores first/last separately.
+  String get fullName => '$firstName $lastName';
+
   factory CurrentUser.fromJson(Map<String, dynamic> json) {
     return CurrentUser(
       id: json['id'] as String,
-      fullName: json['full_name'] as String,
+      firstName: json['first_name'] as String,
+      lastName: json['last_name'] as String,
       email: json['email'] as String,
       matricNumber: json['matric_number'] as String,
       role: json['role'] as String,
