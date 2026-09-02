@@ -228,15 +228,17 @@ class _CohortTile extends ConsumerWidget {
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref, AllowedCohort cohort) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete cohort?'),
         content: Text(
           '${cohort.department?.name ?? cohort.departmentId} (${cohort.cohortYear}) will no '
           'longer be able to register or log in. This can\'t be undone.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Delete')),
         ],
       ),
     );

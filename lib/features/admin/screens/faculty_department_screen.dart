@@ -186,15 +186,17 @@ class _FacultyTile extends ConsumerWidget {
   Future<void> _confirmDeleteFaculty(BuildContext context, WidgetRef ref, Faculty faculty) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete faculty?'),
         content: Text(
           'This also deletes every department under ${faculty.name}, and any allowed '
           'cohorts that reference it. This can\'t be undone.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Delete')),
         ],
       ),
     );
@@ -211,12 +213,14 @@ class _FacultyTile extends ConsumerWidget {
   Future<void> _confirmDeleteDepartment(BuildContext context, WidgetRef ref, Department department) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete department?'),
         content: Text('This deletes ${department.name} and any allowed cohorts under it.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Delete')),
         ],
       ),
     );
