@@ -58,6 +58,15 @@ class AllowedCohortsNotifier extends StateNotifier<AllowedCohortsState> {
         isLoading: false,
         error: _errorMessage(e, "Couldn't load allowed cohorts."),
       );
+    } catch (e) {
+      // Anything that isn't a DioException (bad response shape, a
+      // failed cast, an unexpected null) would otherwise fall through
+      // both catches, leave isLoading stuck at true, and spin forever
+      // with no error shown. Surface it instead.
+      state = state.copyWith(
+        isLoading: false,
+        error: "Couldn't load allowed cohorts: $e",
+      );
     }
   }
 

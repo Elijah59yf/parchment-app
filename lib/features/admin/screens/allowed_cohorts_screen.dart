@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/allowed_cohort.dart';
 import '../models/department.dart';
+import '../models/faculty.dart';
 import '../providers/allowed_cohorts_provider.dart';
 import '../providers/faculty_department_provider.dart';
 
@@ -91,10 +92,45 @@ class AllowedCohortsScreen extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: notifier.load,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: state.cohorts.length,
-        itemBuilder: (context, index) => _CohortTile(cohort: state.cohorts[index]),
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 24),
+        children: _groupedRows(state.cohorts),
+      ),
+    );
+  }
+
+  /// Cohorts arrive pre-sorted by year then department code (see
+  /// listAllowedCohorts), so grouping just has to watch for year
+  /// changes as it walks the list — no separate sort needed here.
+  List<Widget> _groupedRows(List<AllowedCohort> cohorts) {
+    final rows = <Widget>[];
+    int? currentYear;
+    for (final cohort in cohorts) {
+      if (cohort.cohortYear != currentYear) {
+        currentYear = cohort.cohortYear;
+        rows.add(_YearHeader(year: currentYear));
+      }
+      rows.add(_CohortTile(cohort: cohort));
+    }
+    return rows;
+  }
+}
+
+class _YearHeader extends StatelessWidget {
+  const _YearHeader({required this.year});
+
+  final int year;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+      child: Text(
+        '$year',
+        style: Theme.of(context)
+            .textTheme
+            .labelLarge
+            ?.copyWith(color: AppTheme.muted, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -110,71 +146,81 @@ class _CohortTile extends ConsumerWidget {
     final facultyLabel = cohort.faculty?.name ?? cohort.facultyId;
     final departmentLabel = cohort.department?.name ?? cohort.departmentId;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: AppTheme.surface,
-              foregroundColor: AppTheme.ink,
-              child: Text('${cohort.cohortYear}'.substring(2), // e.g. "24" from 2024
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${cohort.cohortYear} — $departmentLabel',
-                    style: Theme.of(context).textTheme.titleMedium,
-                    overflow: TextOverflow.ellipsis,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppTheme.border)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CodeBadge(code: cohort.department?.code ?? '?'),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  departmentLabel,
+                  style: Theme.of(context).textTheme.titleMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(facultyLabel, style: Theme.of(context).textTheme.bodySmall),
+                if (cohort.hasOverride) ...[
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    children: [
+                      if (cohort.levelOverride != null)
+                        _OverrideChip(label: 'Level ${cohort.levelOverride}'),
+                      if (cohort.semesterOverride != null)
+                        _OverrideChip(label: 'Semester ${cohort.semesterOverride}'),
+                    ],
                   ),
-                  Text(facultyLabel, style: Theme.of(context).textTheme.bodySmall),
-                  if (cohort.hasOverride) ...[
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 6,
-                      children: [
-                        if (cohort.levelOverride != null)
-                          _OverrideChip(label: 'Level ${cohort.levelOverride}'),
-                        if (cohort.semesterOverride != null)
-                          _OverrideChip(label: 'Semester ${cohort.semesterOverride}'),
-                      ],
-                    ),
-                  ],
                 ],
-              ),
-            ),
-            Switch(
-              value: cohort.isActive,
-              onChanged: (value) async {
-                try {
-                  await ref.read(allowedCohortsProvider.notifier).setActive(cohort.id, value);
-                } on DioException catch (e) {
-                  if (!context.mounted) return;
-                  _showError(context, e, "Couldn't update cohort.");
-                }
-              },
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              onSelected: (action) {
-                if (action == 'override') {
-                  showDialog(context: context, builder: (_) => _OverrideDialog(cohort: cohort));
-                } else if (action == 'delete') {
-                  _confirmDelete(context, ref, cohort);
-                }
-              },
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: 'override', child: Text('Clock override')),
-                PopupMenuItem(value: 'delete', child: Text('Delete')),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 4),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                cohort.isActive ? 'Active' : 'Inactive',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: cohort.isActive ? AppTheme.ink : AppTheme.subtle,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              Switch(
+                value: cohort.isActive,
+                onChanged: (value) async {
+                  try {
+                    await ref.read(allowedCohortsProvider.notifier).setActive(cohort.id, value);
+                  } on DioException catch (e) {
+                    if (!context.mounted) return;
+                    _showError(context, e, "Couldn't update cohort.");
+                  }
+                },
+              ),
+            ],
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (action) {
+              if (action == 'override') {
+                showDialog(context: context, builder: (_) => _OverrideDialog(cohort: cohort));
+              } else if (action == 'delete') {
+                _confirmDelete(context, ref, cohort);
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'override', child: Text('Clock override')),
+              PopupMenuItem(value: 'delete', child: Text('Delete')),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -185,7 +231,7 @@ class _CohortTile extends ConsumerWidget {
       builder: (_) => AlertDialog(
         title: const Text('Delete cohort?'),
         content: Text(
-          '${cohort.cohortYear} — ${cohort.department?.name ?? cohort.departmentId} will no '
+          '${cohort.department?.name ?? cohort.departmentId} (${cohort.cohortYear}) will no '
           'longer be able to register or log in. This can\'t be undone.',
         ),
         actions: [
@@ -202,6 +248,32 @@ class _CohortTile extends ConsumerWidget {
       if (!context.mounted) return;
       _showError(context, e, "Couldn't delete cohort.");
     }
+  }
+}
+
+/// A code (department, faculty, cohort year) shown in a bordered
+/// square rather than a filled circle, matching AppTheme's "square,
+/// never a stadium/pill shape" rule.
+class _CodeBadge extends StatelessWidget {
+  const _CodeBadge({required this.code});
+
+  final String code;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.border),
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+      ),
+      child: Text(
+        code,
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.ink),
+      ),
+    );
   }
 }
 

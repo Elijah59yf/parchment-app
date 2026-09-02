@@ -112,68 +112,73 @@ class _FacultyTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: ExpansionTile(
-        shape: const Border(),
-        leading: CircleAvatar(
-          backgroundColor: AppTheme.surface,
-          foregroundColor: AppTheme.ink,
-          child: Text(faculty.code, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-        ),
-        title: Text(faculty.name, style: Theme.of(context).textTheme.titleMedium),
-        subtitle: Text('${departments.length} department${departments.length == 1 ? '' : 's'}'),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (action) {
-            if (action == 'edit') {
-              showDialog(context: context, builder: (_) => _FacultyFormDialog(faculty: faculty));
-            } else if (action == 'delete') {
-              _confirmDeleteFaculty(context, ref, faculty);
-            } else if (action == 'add_department') {
-              showDialog(
-                context: context,
-                builder: (_) => _DepartmentFormDialog(initialFacultyId: faculty.id),
-              );
-            }
-          },
-          itemBuilder: (context) => const [
-            PopupMenuItem(value: 'add_department', child: Text('Add department')),
-            PopupMenuItem(value: 'edit', child: Text('Edit faculty')),
-            PopupMenuItem(value: 'delete', child: Text('Delete faculty')),
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppTheme.border)),
+      ),
+      child: Theme(
+        // Strip the ExpansionTile's own divider lines - the hairline
+        // border on this Container already marks the row boundary,
+        // so the default ones would just double up.
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
+          childrenPadding: const EdgeInsets.only(bottom: 4),
+          leading: _CodeBadge(code: faculty.code),
+          title: Text(faculty.name, style: Theme.of(context).textTheme.titleMedium),
+          subtitle: Text('${departments.length} department${departments.length == 1 ? '' : 's'}'),
+          trailing: PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (action) {
+              if (action == 'edit') {
+                showDialog(context: context, builder: (_) => _FacultyFormDialog(faculty: faculty));
+              } else if (action == 'delete') {
+                _confirmDeleteFaculty(context, ref, faculty);
+              } else if (action == 'add_department') {
+                showDialog(
+                  context: context,
+                  builder: (_) => _DepartmentFormDialog(initialFacultyId: faculty.id),
+                );
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'add_department', child: Text('Add department')),
+              PopupMenuItem(value: 'edit', child: Text('Edit faculty')),
+              PopupMenuItem(value: 'delete', child: Text('Delete faculty')),
+            ],
+          ),
+          children: [
+            if (departments.isEmpty)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: Text('No departments yet.'),
+              )
+            else
+              for (final department in departments)
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 20, right: 8),
+                  leading: _CodeBadge(code: department.code, small: true),
+                  title: Text(department.name),
+                  trailing: PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, size: 20),
+                    onSelected: (action) {
+                      if (action == 'edit') {
+                        showDialog(
+                          context: context,
+                          builder: (_) => _DepartmentFormDialog(department: department),
+                        );
+                      } else if (action == 'delete') {
+                        _confirmDeleteDepartment(context, ref, department);
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(value: 'edit', child: Text('Edit')),
+                      PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    ],
+                  ),
+                ),
           ],
         ),
-        children: [
-          if (departments.isEmpty)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Text('No departments yet.'),
-            )
-          else
-            for (final department in departments)
-              ListTile(
-                contentPadding: const EdgeInsets.only(left: 32, right: 8),
-                title: Text(department.name),
-                subtitle: Text('Code ${department.code}'),
-                trailing: PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, size: 20),
-                  onSelected: (action) {
-                    if (action == 'edit') {
-                      showDialog(
-                        context: context,
-                        builder: (_) => _DepartmentFormDialog(department: department),
-                      );
-                    } else if (action == 'delete') {
-                      _confirmDeleteDepartment(context, ref, department);
-                    }
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'edit', child: Text('Edit')),
-                    PopupMenuItem(value: 'delete', child: Text('Delete')),
-                  ],
-                ),
-              ),
-        ],
       ),
     );
   }
@@ -223,6 +228,39 @@ class _FacultyTile extends ConsumerWidget {
       if (!context.mounted) return;
       _showError(context, e, "Couldn't delete department.");
     }
+  }
+}
+
+/// A code (faculty or department) shown in a bordered square rather
+/// than a filled circle, matching AppTheme's "square, never a
+/// stadium/pill shape" rule. `small` is used for the nested
+/// department rows so they read as one level down from their faculty.
+class _CodeBadge extends StatelessWidget {
+  const _CodeBadge({required this.code, this.small = false});
+
+  final String code;
+  final bool small;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = small ? 32.0 : 40.0;
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.border),
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+      ),
+      child: Text(
+        code,
+        style: TextStyle(
+          fontSize: small ? 11 : 13,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.ink,
+        ),
+      ),
+    );
   }
 }
 

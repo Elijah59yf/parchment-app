@@ -82,6 +82,14 @@ class FacultyDepartmentNotifier extends StateNotifier<FacultyDepartmentState> {
         isLoading: false,
         error: _errorMessage(e, "Couldn't load faculties and departments."),
       );
+    } catch (e) {
+      // Same reasoning as allowed_cohorts_provider.dart: a non-Dio
+      // failure (bad response shape, a failed cast) would otherwise
+      // fall through uncaught and leave isLoading stuck at true forever.
+      state = state.copyWith(
+        isLoading: false,
+        error: "Couldn't load faculties and departments: $e",
+      );
     }
   }
 
