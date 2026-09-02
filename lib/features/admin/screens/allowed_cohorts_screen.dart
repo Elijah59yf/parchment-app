@@ -94,79 +94,146 @@ class AllowedCohortsScreen extends ConsumerWidget {
       onRefresh: notifier.load,
       child: ListView(
         padding: const EdgeInsets.only(bottom: 24),
-        children: _groupedRows(state.cohorts),
+        children: _facultyGroups(state.cohorts),
       ),
     );
   }
 
-  /// Cohorts arrive pre-sorted by year then department code (see
-  /// listAllowedCohorts), so grouping just has to watch for year
-  /// changes as it walks the list — no separate sort needed here.
-  List<Widget> _groupedRows(List<AllowedCohort> cohorts) {
-    final rows = <Widget>[];
-    int? currentYear;
+  /// Groups cohorts into Faculty > Department, each level sorted by
+  /// its own code (same order as the Faculties & Departments screen),
+  /// so departments from different faculties are never shown mixed
+  /// together and years are scoped under the department they belong to.
+  List<Widget> _facultyGroups(List<AllowedCohort> cohorts) {
+    final byFaculty = <String, List<AllowedCohort>>{};
     for (final cohort in cohorts) {
-      if (cohort.cohortYear != currentYear) {
-        currentYear = cohort.cohortYear;
-        rows.add(_YearHeader(year: currentYear));
-      }
-      rows.add(_CohortTile(cohort: cohort));
+      byFaculty.putIfAbsent(cohort.facultyId, () => []).add(cohort);
     }
-    return rows;
+
+    final facultyIds = byFaculty.keys.toList()
+      ..sort((a, b) {
+        final codeA = byFaculty[a]!.first.faculty?.code ?? a;
+        final codeB = byFaculty[b]!.first.faculty?.code ?? b;
+        return codeA.compareTo(codeB);
+      });
+
+    return [
+      for (final facultyId in facultyIds)
+        _FacultyGroup(
+          facultyId: facultyId,
+          faculty: byFaculty[facultyId]!.first.faculty,
+          cohorts: byFaculty[facultyId]!,
+        ),
+    ];
   }
 }
 
-class _YearHeader extends StatelessWidget {
-  const _YearHeader({required this.year});
+/// Top level of the hierarchy: one expansion tile per faculty,
+/// containing that faculty's departments (never another faculty's).
+class _FacultyGroup extends StatelessWidget {
+  const _FacultyGroup({required this.facultyId, required this.faculty, required this.cohorts});
 
-  final int year;
+  final String facultyId;
+  final Faculty? faculty;
+  final List<AllowedCohort> cohorts;
+
+  @override
+  Widget build(BuildContext context) {
+    final byDepartment = <String, List<AllowedCohort>>{};
+    for (final cohort in cohorts) {
+      byDepartment.putIfAbsent(cohort.departmentId, () => []).add(cohort);
+    }
+
+    final departmentIds = byDepartment.keys.toList()
+      ..sort((a, b) {
+        final codeA = byDepartment[a]!.first.department?.code ?? a;
+        final codeB = byDepartment[b]!.first.department?.code ?? b;
+        return codeA.compareTo(codeB);
+      });
+
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppTheme.border)),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          tilePadding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
+          childrenPadding: const EdgeInsets.only(bottom: 4),
+          leading: _CodeBadge(code: faculty?.code ?? '?'),
+          title: Text(faculty?.name ?? facultyId, style: Theme.of(context).textTheme.titleMedium),
+          subtitle: Text('${cohorts.length} cohort${cohorts.length == 1 ? '' : 's'}'),
+          children: [
+            for (final departmentId in departmentIds)
+              _DepartmentGroup(
+                departmentId: departmentId,
+                department: byDepartment[departmentId]!.first.department,
+                cohorts: byDepartment[departmentId]!
+                  ..sort((a, b) => a.cohortYear.compareTo(b.cohortYear)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Second level: one expansion tile per department, nested under its
+/// faculty, containing that department's individual cohort years.
+class _DepartmentGroup extends StatelessWidget {
+  const _DepartmentGroup({
+    required this.departmentId,
+    required this.department,
+    required this.cohorts,
+  });
+
+  final String departmentId;
+  final Department? department;
+  final List<AllowedCohort> cohorts;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-      child: Text(
-        '$year',
-        style: Theme.of(context)
-            .textTheme
-            .labelLarge
-            ?.copyWith(color: AppTheme.muted, fontWeight: FontWeight.w700),
+      padding: const EdgeInsets.only(left: 20),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          tilePadding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
+          childrenPadding: EdgeInsets.zero,
+          leading: _CodeBadge(code: department?.code ?? '?', small: true),
+          title: Text(department?.name ?? departmentId, style: Theme.of(context).textTheme.bodyLarge),
+          subtitle: Text('${cohorts.length} cohort year${cohorts.length == 1 ? '' : 's'}'),
+          children: [for (final cohort in cohorts) _CohortYearRow(cohort: cohort)],
+        ),
       ),
     );
   }
 }
 
-class _CohortTile extends ConsumerWidget {
-  const _CohortTile({required this.cohort});
+/// Leaf row nested under a _DepartmentGroup - just the year plus its
+/// controls. Faculty and department are already shown by the ancestor
+/// groups, so this doesn't repeat them.
+class _CohortYearRow extends ConsumerWidget {
+  const _CohortYearRow({required this.cohort});
 
   final AllowedCohort cohort;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final facultyLabel = cohort.faculty?.name ?? cohort.facultyId;
-    final departmentLabel = cohort.department?.name ?? cohort.departmentId;
-
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
+      padding: const EdgeInsets.fromLTRB(44, 10, 12, 10),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppTheme.border)),
+        border: Border(top: BorderSide(color: AppTheme.border)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CodeBadge(code: cohort.department?.code ?? '?'),
-          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  departmentLabel,
-                  style: Theme.of(context).textTheme.titleMedium,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(facultyLabel, style: Theme.of(context).textTheme.bodySmall),
+                Text('${cohort.cohortYear}', style: Theme.of(context).textTheme.titleMedium),
                 if (cohort.hasOverride) ...[
                   const SizedBox(height: 6),
                   Wrap(
@@ -255,17 +322,20 @@ class _CohortTile extends ConsumerWidget {
 
 /// A code (department, faculty, cohort year) shown in a bordered
 /// square rather than a filled circle, matching AppTheme's "square,
-/// never a stadium/pill shape" rule.
+/// never a stadium/pill shape" rule. `small` is used for departments
+/// nested under a faculty, so they read as one level down.
 class _CodeBadge extends StatelessWidget {
-  const _CodeBadge({required this.code});
+  const _CodeBadge({required this.code, this.small = false});
 
   final String code;
+  final bool small;
 
   @override
   Widget build(BuildContext context) {
+    final size = small ? 32.0 : 40.0;
     return Container(
-      width: 40,
-      height: 40,
+      width: size,
+      height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         border: Border.all(color: AppTheme.border),
@@ -273,7 +343,11 @@ class _CodeBadge extends StatelessWidget {
       ),
       child: Text(
         code,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.ink),
+        style: TextStyle(
+          fontSize: small ? 11 : 13,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.ink,
+        ),
       ),
     );
   }
