@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/coming_soon_screen.dart';
 import 'allowed_cohorts_screen.dart';
 import 'faculty_department_screen.dart';
+import 'session_settings_screen.dart';
 import 'user_management_screen.dart';
 
 /// Landing screen for the Admin tab (bottom-nav branch 6, admin role
@@ -12,9 +13,9 @@ import 'user_management_screen.dart';
 /// push UserManagementScreen, so admin tooling stays consistent
 /// whether it's reached from here or from Feed.
 ///
-/// Allowed Cohorts and App Settings are still ComingSoonScreen; they
-/// route the same way the rest of this list will once built, so no
-/// further wiring is needed here when they land.
+/// App Settings is still ComingSoonScreen; it routes the same way the
+/// rest of this list will once built, so no further wiring is needed
+/// here when it lands.
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
 
@@ -42,9 +43,17 @@ class AdminHomeScreen extends StatelessWidget {
             ),
           ),
           _AdminTile(
+            icon: Icons.schedule_outlined,
+            title: 'Session Settings',
+            subtitle: 'Set the current session and semester',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SessionSettingsScreen()),
+            ),
+          ),
+          _AdminTile(
             icon: Icons.tune_outlined,
             title: 'App Settings',
-            subtitle: 'Session/semester clock and app-wide toggles',
+            subtitle: 'App-wide toggles',
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => const ComingSoonScreen(
