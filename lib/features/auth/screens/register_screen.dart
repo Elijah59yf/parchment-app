@@ -220,7 +220,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Matric number',
                     hintText: '240408019',
-                    prefixIcon: Icon(Icons.badge_outlined),
                   ),
                   validator: _validateMatric,
                 ),
@@ -232,7 +231,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   autofillHints: const [AutofillHints.email],
                   decoration: const InputDecoration(
                     labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
                   ),
                   validator: _validateEmail,
                 ),
@@ -244,7 +242,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   autofillHints: const [AutofillHints.newPassword],
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -266,7 +263,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   autofillHints: const [AutofillHints.newPassword],
                   decoration: InputDecoration(
                     labelText: 'Confirm password',
-                    prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword
@@ -404,7 +400,6 @@ class _SplitNameFieldState extends State<_SplitNameField> {
                 autofillHints: const [AutofillHints.givenName],
                 decoration: const InputDecoration(
                   labelText: 'First name',
-                  prefixIcon: Icon(Icons.person_outline),
                   border: InputBorder.none,
                 ),
                 validator: widget.validateFirstName,
