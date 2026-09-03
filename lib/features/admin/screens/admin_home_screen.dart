@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/coming_soon_screen.dart';
 import 'allowed_cohorts_screen.dart';
+import 'app_settings_screen.dart';
 import 'faculty_department_screen.dart';
 import 'session_settings_screen.dart';
 import 'user_management_screen.dart';
@@ -13,9 +13,8 @@ import 'user_management_screen.dart';
 /// push UserManagementScreen, so admin tooling stays consistent
 /// whether it's reached from here or from Feed.
 ///
-/// App Settings is still ComingSoonScreen; it routes the same way the
-/// rest of this list will once built, so no further wiring is needed
-/// here when it lands.
+/// Every tile below routes to a real screen now - none of them are
+/// ComingSoonScreen anymore.
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
 
@@ -55,12 +54,7 @@ class AdminHomeScreen extends StatelessWidget {
             title: 'App Settings',
             subtitle: 'App-wide toggles',
             onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const ComingSoonScreen(
-                  title: 'App Settings',
-                  icon: Icons.tune_outlined,
-                ),
-              ),
+              MaterialPageRoute(builder: (_) => const AppSettingsScreen()),
             ),
           ),
           const Divider(height: 32),
