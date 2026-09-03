@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_logo.dart';
 import '../providers/auth_provider.dart';
 
@@ -205,34 +206,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                 ),
                 const SizedBox(height: 28),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _firstNameController,
-                        textInputAction: TextInputAction.next,
-                        textCapitalization: TextCapitalization.words,
-                        autofillHints: const [AutofillHints.givenName],
-                        decoration: const InputDecoration(
-                          labelText: 'First name',
-                          prefixIcon: Icon(Icons.person_outline),
-                        ),
-                        validator: _validateFirstName,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _lastNameController,
-                        textInputAction: TextInputAction.next,
-                        textCapitalization: TextCapitalization.words,
-                        autofillHints: const [AutofillHints.familyName],
-                        decoration: const InputDecoration(labelText: 'Last name'),
-                        validator: _validateLastName,
-                      ),
-                    ),
-                  ],
+                _SplitNameField(
+                  firstNameController: _firstNameController,
+                  lastNameController: _lastNameController,
+                  validateFirstName: _validateFirstName,
+                  validateLastName: _validateLastName,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -347,6 +325,107 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// First/Last name as one bordered field split by a divider, rather
+/// than two independent outlined boxes sitting side by side - reads
+/// as "one Name field with two segments" instead of one field that
+/// got hurriedly cut in half. The two segments still validate,
+/// autofill, and submit independently; only the visual container is
+/// shared. Tracks focus across both inner fields so the shared border
+/// still darkens on focus, matching every other field's behavior
+/// (see AppTheme.inputDecorationTheme) - error text still surfaces
+/// per-segment below itself, same as any other field.
+class _SplitNameField extends StatefulWidget {
+  const _SplitNameField({
+    required this.firstNameController,
+    required this.lastNameController,
+    required this.validateFirstName,
+    required this.validateLastName,
+  });
+
+  final TextEditingController firstNameController;
+  final TextEditingController lastNameController;
+  final FormFieldValidator<String> validateFirstName;
+  final FormFieldValidator<String> validateLastName;
+
+  @override
+  State<_SplitNameField> createState() => _SplitNameFieldState();
+}
+
+class _SplitNameFieldState extends State<_SplitNameField> {
+  final _firstFocus = FocusNode();
+  final _lastFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _firstFocus.addListener(_onFocusChange);
+    _lastFocus.addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _firstFocus.removeListener(_onFocusChange);
+    _lastFocus.removeListener(_onFocusChange);
+    _firstFocus.dispose();
+    _lastFocus.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() => setState(() {});
+
+  @override
+  Widget build(BuildContext context) {
+    final isFocused = _firstFocus.hasFocus || _lastFocus.hasFocus;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: isFocused ? AppTheme.borderStrong : AppTheme.border,
+          width: isFocused ? 1.6 : 1.2,
+        ),
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: widget.firstNameController,
+                focusNode: _firstFocus,
+                textInputAction: TextInputAction.next,
+                textCapitalization: TextCapitalization.words,
+                autofillHints: const [AutofillHints.givenName],
+                decoration: const InputDecoration(
+                  labelText: 'First name',
+                  prefixIcon: Icon(Icons.person_outline),
+                  border: InputBorder.none,
+                ),
+                validator: widget.validateFirstName,
+              ),
+            ),
+            const VerticalDivider(width: 1, thickness: 1, color: AppTheme.border),
+            Expanded(
+              child: TextFormField(
+                controller: widget.lastNameController,
+                focusNode: _lastFocus,
+                textInputAction: TextInputAction.next,
+                textCapitalization: TextCapitalization.words,
+                autofillHints: const [AutofillHints.familyName],
+                decoration: const InputDecoration(
+                  labelText: 'Last name',
+                  border: InputBorder.none,
+                ),
+                validator: widget.validateLastName,
+              ),
+            ),
+          ],
         ),
       ),
     );
