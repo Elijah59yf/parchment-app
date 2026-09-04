@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,7 +23,20 @@ class ProfileScreen extends ConsumerWidget {
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('$error', textAlign: TextAlign.center),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _friendlyError(error),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton(
+                  onPressed: () => ref.invalidate(currentUserProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
           ),
         ),
         data: (user) => ListView(
@@ -143,4 +157,30 @@ class _InfoRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Turns whatever currentUserProvider's Future threw into something a
+/// user should actually see - never the raw exception. A DioException
+/// (like a DNS/connection failure) previously rendered as a full
+/// SocketException stack trace directly on screen; this maps the
+/// common cases to plain language and falls back to a generic message
+/// for anything else, so nothing internal ever leaks into the UI.
+String _friendlyError(Object error) {
+  if (error is DioException) {
+    switch (error.type) {
+      case DioExceptionType.connectionError:
+      case DioExceptionType.connectionTimeout:
+        return "Couldn't connect. Check your internet connection and try again.";
+      case DioExceptionType.receiveTimeout:
+      case DioExceptionType.sendTimeout:
+        return 'The server took too long to respond. Try again.';
+      default:
+        final data = error.response?.data;
+        if (data is Map && data['error'] is String) {
+          return data['error'] as String;
+        }
+        return "Couldn't load your profile.";
+    }
+  }
+  return "Couldn't load your profile.";
 }
