@@ -7,7 +7,7 @@ import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/announcements/screens/feed_screen.dart';
-import '../../features/courses/screens/dashboard_screen.dart';
+import '../../features/study/screens/study_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/admin/screens/admin_home_screen.dart';
 import '../shell/app_shell.dart';
@@ -44,7 +44,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/dashboard',
-                builder: (context, state) => const DashboardScreen(),
+                builder: (context, state) => const ComingSoonScreen(
+                  title: 'Dashboard',
+                  icon: Icons.dashboard_outlined,
+                ),
               ),
             ],
           ),
@@ -55,13 +58,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(
-                path: '/materials',
-                builder: (context, state) => const ComingSoonScreen(
-                  title: 'Materials',
-                  icon: Icons.folder_outlined,
-                ),
-              ),
+              GoRoute(path: '/study', builder: (context, state) => const StudyScreen()),
             ],
           ),
           StatefulShellBranch(

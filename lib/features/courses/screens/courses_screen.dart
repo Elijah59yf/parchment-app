@@ -5,69 +5,71 @@ import '../../../core/theme/app_theme.dart';
 import '../models/course.dart';
 import '../providers/my_courses_provider.dart';
 
-/// The Dashboard tab (index 0, visible to every role). Right now this
-/// is entirely the student's own course list - core courses (always
-/// present, no action) plus electives (one unified list, each row's
-/// own switch registers/drops it). Every role sees this the same way
-/// for now, since admin/rep accounts currently still carry real
-/// department/cohort data just like a student (see PLAN.md's "admin
-/// as student for now" note) - once non-student admin accounts exist,
-/// this needs a guard for callers with no cohort data at all.
-class DashboardScreen extends ConsumerWidget {
-  const DashboardScreen({super.key});
+/// The Courses sub-tab inside Study (see study_screen.dart). This used
+/// to be the whole of the Dashboard tab - split out once it became
+/// clear Dashboard needed to be a real overview instead of secretly
+/// just being the course list. No Scaffold/AppBar here since
+/// StudyScreen owns those; this is just the body content for one of
+/// its internal tabs.
+///
+/// Core courses (always present, no action) plus electives (one
+/// unified list, each row's own switch registers/drops it). Every
+/// role sees this the same way for now, since admin/rep accounts
+/// currently still carry real department/cohort data just like a
+/// student - once non-student admin accounts exist, this needs a
+/// guard for callers with no cohort data at all.
+class CoursesScreen extends ConsumerWidget {
+  const CoursesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(myCoursesProvider);
     final notifier = ref.read(myCoursesProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : state.error != null
-              ? _ErrorState(message: state.error!, onRetry: notifier.load)
-              : RefreshIndicator(
-                  onRefresh: notifier.load,
-                  child: ListView(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    children: [
-                      if (state.level != null && state.semester != null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
-                          child: Text(
-                            'Level ${state.level} \u00b7 Semester ${state.semester}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: AppTheme.muted),
-                          ),
-                        ),
-                      _SectionHeader(title: 'Core courses'),
-                      if (state.core.isEmpty)
-                        const _EmptyRow(text: 'No core courses set up for this semester yet.')
-                      else
-                        for (final course in state.core) _CourseRow(course: course),
-                      _SectionHeader(title: 'Electives'),
-                      if (state.myElectives.isEmpty && state.availableElectives.isEmpty)
-                        const _EmptyRow(text: 'No electives available this semester.')
-                      else ...[
-                        for (final course in state.myElectives)
-                          _CourseRow(
-                            course: course,
-                            isRegistered: true,
-                            onChanged: (_) => _drop(context, notifier, course),
-                          ),
-                        for (final course in state.availableElectives)
-                          _CourseRow(
-                            course: course,
-                            isRegistered: false,
-                            onChanged: (_) => _register(context, notifier, course),
-                          ),
-                      ],
-                    ],
-                  ),
-                ),
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.error != null) {
+      return _ErrorState(message: state.error!, onRetry: notifier.load);
+    }
+
+    return RefreshIndicator(
+      onRefresh: notifier.load,
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 24),
+        children: [
+          if (state.level != null && state.semester != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
+              child: Text(
+                'Level ${state.level} \u00b7 Semester ${state.semester}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.muted),
+              ),
+            ),
+          _SectionHeader(title: 'Core courses'),
+          if (state.core.isEmpty)
+            const _EmptyRow(text: 'No core courses set up for this semester yet.')
+          else
+            for (final course in state.core) _CourseRow(course: course),
+          _SectionHeader(title: 'Electives'),
+          if (state.myElectives.isEmpty && state.availableElectives.isEmpty)
+            const _EmptyRow(text: 'No electives available this semester.')
+          else ...[
+            for (final course in state.myElectives)
+              _CourseRow(
+                course: course,
+                isRegistered: true,
+                onChanged: (_) => _drop(context, notifier, course),
+              ),
+            for (final course in state.availableElectives)
+              _CourseRow(
+                course: course,
+                isRegistered: false,
+                onChanged: (_) => _register(context, notifier, course),
+              ),
+          ],
+        ],
+      ),
     );
   }
 
