@@ -7,6 +7,7 @@ import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/announcements/screens/feed_screen.dart';
+import '../../features/courses/screens/dashboard_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/admin/screens/admin_home_screen.dart';
 import '../shell/app_shell.dart';
@@ -43,10 +44,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/dashboard',
-                builder: (context, state) => const ComingSoonScreen(
-                  title: 'Dashboard',
-                  icon: Icons.dashboard_outlined,
-                ),
+                builder: (context, state) => const DashboardScreen(),
               ),
             ],
           ),
