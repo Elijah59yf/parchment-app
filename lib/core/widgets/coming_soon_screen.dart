@@ -30,6 +30,15 @@ class ComingSoonScreen extends StatelessWidget {
 /// Scaffold (e.g. Study's Timetable/Materials sub-tabs, which live
 /// inside a TabBarView and would otherwise get a nested, duplicate
 /// AppBar if they used ComingSoonScreen directly).
+///
+/// SizedBox.expand + Align rather than a bare Center: this widget gets
+/// reused in more than one kind of parent (Scaffold.body, TabBarView),
+/// and a bare Center trusts whatever ambient constraints its parent
+/// happens to hand it are bounded - which has bitten this exact file
+/// before (see the layout-bug note in app_shell.dart's doc comment).
+/// SizedBox.expand pins its own size to whatever bounded constraints
+/// its parent DOES provide, so there's nothing left for a Center here
+/// to get wrong regardless of which parent hosts it.
 class ComingSoonBody extends StatelessWidget {
   const ComingSoonBody({super.key, required this.icon});
 
@@ -37,19 +46,22 @@ class ComingSoonBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 40, color: AppTheme.subtle),
-          const SizedBox(height: 12),
-          Text(
-            'Coming soon',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.muted,
-                ),
-          ),
-        ],
+    return SizedBox.expand(
+      child: Align(
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 40, color: AppTheme.subtle),
+            const SizedBox(height: 12),
+            Text(
+              'Coming soon',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.muted,
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }

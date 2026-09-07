@@ -31,6 +31,21 @@ import '../theme/app_theme.dart';
 /// every screen already shows its own name in its app bar anyway, so
 /// the label was redundant besides.
 ///
+/// 3. A body screen (ComingSoonScreen/ComingSoonBody) rendered
+///    completely blank in release-style builds — no title, no
+///    content, only this bar painting — with no error overlay to
+///    explain why, consistent with a layout exception being thrown
+///    and silently swallowed rather than shown (debug mode would have
+///    surfaced it loudly; nothing here proves that's what happened,
+///    but it's the failure mode that fits what was actually visible).
+///    Rather than keep guessing at the exact trigger, both this file
+///    and coming_soon_screen.dart were rewritten defensively: fixed
+///    heights instead of sized-to-content, SizedBox.expand+Align
+///    instead of a bare Center (never trust ambient constraints from
+///    whatever parent happens to host a given widget), and an
+///    explicit Material ancestor for every InkWell instead of relying
+///    on Scaffold to supply one implicitly.
+///
 /// admin additionally gets a centered, elevated, notched FAB for Admin
 /// instead of it being a 7th flat item (7 was cramped — Material's own
 /// guidance caps a standard bottom bar at 5).
@@ -139,6 +154,11 @@ class _AdminShell extends StatelessWidget {
 }
 
 /// The plain (non-notched) bar used for student/rep.
+/// Fixed height for the plain (non-notched) bar, so its size is never
+/// left for layout to infer from content - matches the touch-target
+/// height Material's default bottom bars use.
+const double _kBarHeight = 64;
+
 class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.items,
@@ -152,26 +172,33 @@ class _BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.paper,
-        border: Border(top: BorderSide(color: AppTheme.border)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              for (final d in items)
-                Expanded(
-                  child: _BarItem(
-                    dest: d,
-                    selected: currentBranchIndex == d.branchIndex,
-                    onTap: () => onSelect(d.branchIndex),
+    return Material(
+      // Explicit Material ancestor rather than relying on Scaffold to
+      // provide one implicitly for a plain Container-based bar - each
+      // _BarItem's InkWell needs a real Material ancestor to paint its
+      // splash into, and this guarantees one regardless of Scaffold's
+      // internal slot behavior.
+      color: AppTheme.paper,
+      child: Container(
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: AppTheme.border)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: _kBarHeight,
+            child: Row(
+              children: [
+                for (final d in items)
+                  Expanded(
+                    child: _BarItem(
+                      dest: d,
+                      selected: currentBranchIndex == d.branchIndex,
+                      onTap: () => onSelect(d.branchIndex),
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -197,22 +224,28 @@ class _BarItem extends StatelessWidget {
     // still reveals the name via the platform's native tooltip.
     return Tooltip(
       message: dest.label,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: selected ? AppTheme.ink : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              selected ? dest.filledIcon : dest.outlineIcon,
-              color: selected ? AppTheme.paper : AppTheme.muted,
-              size: 24,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radius)),
+          child: SizedBox.expand(
+            child: Align(
+              alignment: Alignment.center,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: selected ? AppTheme.ink : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppTheme.radius),
+                ),
+                child: Icon(
+                  selected ? dest.filledIcon : dest.outlineIcon,
+                  color: selected ? AppTheme.paper : AppTheme.muted,
+                  size: 24,
+                ),
+              ),
             ),
           ),
         ),
