@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../models/course.dart';
 import '../providers/my_courses_provider.dart';
 
@@ -27,7 +28,15 @@ class CoursesScreen extends ConsumerWidget {
     final notifier = ref.read(myCoursesProvider.notifier);
 
     if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return ListView(
+        padding: const EdgeInsets.only(bottom: 24),
+        children: [
+          _SectionHeader(title: 'Core courses'),
+          const SkeletonList(count: 3),
+          _SectionHeader(title: 'Electives'),
+          const SkeletonList(count: 4, hasTrailing: true),
+        ],
+      );
     }
     if (state.error != null) {
       return _ErrorState(message: state.error!, onRetry: notifier.load);
@@ -42,7 +51,7 @@ class CoursesScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
               child: Text(
-                'Level ${state.level} \u00b7 Semester ${state.semester}',
+                '${state.level} Level \u00b7 Semester ${state.semester}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.muted),
               ),
             ),

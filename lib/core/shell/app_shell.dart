@@ -179,26 +179,21 @@ class _BottomBar extends StatelessWidget {
       // splash into, and this guarantees one regardless of Scaffold's
       // internal slot behavior.
       color: AppTheme.paper,
-      child: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppTheme.border)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: _kBarHeight,
-            child: Row(
-              children: [
-                for (final d in items)
-                  Expanded(
-                    child: _BarItem(
-                      dest: d,
-                      selected: currentBranchIndex == d.branchIndex,
-                      onTap: () => onSelect(d.branchIndex),
-                    ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: _kBarHeight,
+          child: Row(
+            children: [
+              for (final d in items)
+                Expanded(
+                  child: _BarItem(
+                    dest: d,
+                    selected: currentBranchIndex == d.branchIndex,
+                    onTap: () => onSelect(d.branchIndex),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),
