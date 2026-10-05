@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/skeleton.dart';
 import '../../admin/screens/user_management_screen.dart';
 import '../../auth/providers/current_user_provider.dart';
 import '../providers/announcements_provider.dart';
@@ -110,7 +111,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   Widget _buildBody(AnnouncementsState state) {
     if (state.isInitialLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: SkeletonCardList(),
+      );
     }
 
     if (state.error != null && state.items.isEmpty) {

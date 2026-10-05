@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../models/allowed_cohort.dart';
 import '../models/department.dart';
 import '../models/faculty.dart';
@@ -49,7 +50,7 @@ class AllowedCohortsScreen extends ConsumerWidget {
     bool facultiesLoading,
   ) {
     if (state.isLoading || facultiesLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SkeletonList(count: 5, hasTrailing: true);
     }
 
     if (state.error != null) {
@@ -157,7 +158,7 @@ class _FacultyGroup extends StatelessWidget {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          initiallyExpanded: false,
+          initiallyExpanded: true,
           tilePadding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
           childrenPadding: const EdgeInsets.only(bottom: 4),
           leading: _CodeBadge(code: faculty?.code ?? '?'),
@@ -198,7 +199,7 @@ class _DepartmentGroup extends StatelessWidget {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          initiallyExpanded: false,
+          initiallyExpanded: true,
           tilePadding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
           childrenPadding: EdgeInsets.zero,
           leading: _CodeBadge(code: department?.code ?? '?', small: true),

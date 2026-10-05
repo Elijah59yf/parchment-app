@@ -49,8 +49,17 @@ class Skeleton extends StatelessWidget {
 /// Same padding/border as the real rows so the transition from
 /// loading to loaded doesn't visibly jump.
 class SkeletonRow extends StatelessWidget {
-  const SkeletonRow({super.key, this.hasTrailing = false, this.hasSubtitle = true});
+  const SkeletonRow({
+    super.key,
+    this.hasLeading = true,
+    this.hasTrailing = false,
+    this.hasSubtitle = true,
+  });
 
+  /// False for ListTile-style rows with no leading badge at all (e.g.
+  /// User Management, which is a plain ListTile - a placeholder badge
+  /// there would visually pop into nothing once real content loads).
+  final bool hasLeading;
   final bool hasTrailing;
   final bool hasSubtitle;
 
@@ -63,8 +72,10 @@ class SkeletonRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Skeleton(width: 40, height: 40, borderRadius: BorderRadius.circular(AppTheme.radius)),
-          const SizedBox(width: 14),
+          if (hasLeading) ...[
+            Skeleton(width: 40, height: 40, borderRadius: BorderRadius.circular(AppTheme.radius)),
+            const SizedBox(width: 14),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,19 +98,84 @@ class SkeletonRow extends StatelessWidget {
   }
 }
 
+/// Matches AnnouncementCard's shape - title, a few lines of body
+/// preview, then a footer line (small author badge + date) - entirely
+/// different proportions from SkeletonRow, so it's its own widget
+/// rather than a variant.
+class SkeletonCard extends StatelessWidget {
+  const SkeletonCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Skeleton.expand(height: 18),
+            const SizedBox(height: 10),
+            const Skeleton.expand(height: 14),
+            const SizedBox(height: 6),
+            const Skeleton.expand(height: 14),
+            const SizedBox(height: 6),
+            Skeleton(width: MediaQuery.of(context).size.width * 0.5, height: 14),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Skeleton(width: 90, height: 12, borderRadius: BorderRadius.circular(6)),
+                const SizedBox(width: 8),
+                Skeleton(width: 50, height: 12, borderRadius: BorderRadius.circular(6)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// A handful of SkeletonRows stacked - the usual way this gets used,
 /// since a loading list is never just one row.
 class SkeletonList extends StatelessWidget {
-  const SkeletonList({super.key, this.count = 5, this.hasTrailing = false});
+  const SkeletonList({
+    super.key,
+    this.count = 5,
+    this.hasLeading = true,
+    this.hasTrailing = false,
+  });
 
   final int count;
+  final bool hasLeading;
   final bool hasTrailing;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        for (var i = 0; i < count; i++) SkeletonRow(hasTrailing: hasTrailing),
+        for (var i = 0; i < count; i++)
+          SkeletonRow(hasLeading: hasLeading, hasTrailing: hasTrailing),
+      ],
+    );
+  }
+}
+
+/// A handful of SkeletonCards stacked, spaced the same way Feed/My
+/// Announcements space their real AnnouncementCards.
+class SkeletonCardList extends StatelessWidget {
+  const SkeletonCardList({super.key, this.count = 4});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < count; i++) ...[
+          if (i > 0) const SizedBox(height: 12),
+          const SkeletonCard(),
+        ],
       ],
     );
   }

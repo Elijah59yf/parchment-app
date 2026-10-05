@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../providers/app_settings_provider.dart';
 
 /// Admin-only. Two app-wide flags, both stored as plain rows in the
@@ -23,7 +24,7 @@ class AppSettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('App Settings')),
       body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SkeletonList(count: 2, hasLeading: false, hasTrailing: true)
           : state.error != null
               ? _ErrorState(message: state.error!, onRetry: notifier.load)
               : ListView(

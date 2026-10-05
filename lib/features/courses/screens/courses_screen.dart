@@ -32,9 +32,9 @@ class CoursesScreen extends ConsumerWidget {
         padding: const EdgeInsets.only(bottom: 24),
         children: [
           _SectionHeader(title: 'Core courses'),
-          const SkeletonList(count: 3),
+          const SkeletonList(count: 4),
           _SectionHeader(title: 'Electives'),
-          const SkeletonList(count: 4, hasTrailing: true),
+          const SkeletonList(count: 3, hasTrailing: true),
         ],
       );
     }

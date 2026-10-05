@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/skeleton.dart';
 import '../../auth/providers/current_user_provider.dart';
 import '../providers/announcements_provider.dart';
 import '../widgets/announcement_card.dart';
@@ -28,7 +29,10 @@ class MyAnnouncementsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('My announcements')),
       body: currentUser.when(
         data: (user) => _ScopedList(authorId: user.id),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SingleChildScrollView(
+          padding: EdgeInsets.all(16),
+          child: SkeletonCardList(),
+        ),
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -85,7 +89,10 @@ class _ScopedListState extends ConsumerState<_ScopedList> {
     final state = ref.watch(myAnnouncementsProvider(widget.authorId));
 
     if (state.isInitialLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: SkeletonCardList(),
+      );
     }
 
     if (state.error != null && state.items.isEmpty) {

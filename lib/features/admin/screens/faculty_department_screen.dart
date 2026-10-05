@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../models/department.dart';
 import '../models/faculty.dart';
 import '../providers/faculty_department_provider.dart';
@@ -41,7 +42,7 @@ class FacultyDepartmentScreen extends ConsumerWidget {
     FacultyDepartmentNotifier notifier,
   ) {
     if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SkeletonList(count: 5);
     }
 
     if (state.error != null) {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/role_badge.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../models/managed_user.dart';
 import '../providers/users_list_provider.dart';
 import 'edit_user_screen.dart';
@@ -104,7 +105,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
 
   Widget _buildList(UsersListState state, List<ManagedUser> filtered) {
     if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SkeletonList(count: 6, hasLeading: false);
     }
 
     if (state.error != null && state.users.isEmpty) {
